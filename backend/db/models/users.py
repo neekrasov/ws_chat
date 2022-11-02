@@ -6,5 +6,5 @@ class User(BeanieBaseUser[PydanticObjectId]):
     pass
 
 
-async def get_user_db():
+async def get_user_db() -> BeanieUserDatabase:
     yield BeanieUserDatabase(User)

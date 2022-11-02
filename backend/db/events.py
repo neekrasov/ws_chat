@@ -13,7 +13,9 @@ def setup_deps(app: FastAPI, settings: Settings):
         host=settings.mongodb_host,
         port=settings.mongodb_port,
     )
-    redis = Redis.from_url(f"redis://{settings.redis_host}:{settings.redis_port}")
+    redis = Redis.from_url(
+        f"redis://{settings.redis_host}:{settings.redis_port}", decode_responses=True
+    )
 
     app.dependency_overrides[get_mongo] = lambda: mongodb
     app.dependency_overrides[get_redis] = lambda: redis
