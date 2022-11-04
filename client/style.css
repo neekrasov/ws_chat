@@ -4,11 +4,15 @@
     box-sizing: border-box;
 }
 
+.hidden {
+    display: none;
+}
+
 body {
     background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(9,9,121,1) 35%, rgba(0,212,255,1) 100%);
 }
 
-.chat {
+.chat, .auth {
     width: 400px;
     max-height: 600px;
     margin: 100px auto;
@@ -18,19 +22,19 @@ body {
     box-shadow: 0px 4px #009de4, 0px 10px 15px rgba(0, 0, 0, 0.2);
 }
 
-.chat h1 {
+.chat h1, .auth h1 {
     margin-bottom: 20px;
     font-size: 30px;
     color: #fff;
     text-align: center;
 }
 
-.chat form {
+.chat form, .auth form {
     display: flex;
     flex-direction: column;
 }
 
-.chat form input {
+.chat form input, .auth form input {
     height: 40px;
     margin-bottom: 10px;
     padding: 0 10px;
@@ -39,7 +43,7 @@ body {
     font-size: 16px;
 }
 
-.chat form button {
+.chat form button, .auth form button {
     display: block;
     margin: 0 auto;
     margin-top: 20px;
@@ -55,6 +59,12 @@ body {
     background-size: 200% auto;
     box-shadow: 0 0 20px rgba(0, 0, 0, .1);
     transition: .5s;
+}
+
+.auth_menu {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
 }
 
 .chat .chat_messages {

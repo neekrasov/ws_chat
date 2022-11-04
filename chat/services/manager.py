@@ -37,4 +37,3 @@ class UserManager(ObjectIDIDMixin, BaseUserManager[User, PydanticObjectId]):
         self, user: User, token: str, request: Request | None = None
     ):
         return f"User {user.id} has requested verification. Verification token: {token}"
-        print(f"Verification requested for user {user.id}. Verification token: {token}")

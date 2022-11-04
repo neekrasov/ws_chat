@@ -10,10 +10,10 @@ templates = Jinja2Templates(directory="client/templates")
 async def get(
     request: Request
 ):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("chat.html", {"request": request})
 
 @router.websocket("/ws")
-async def join_room(
+async def ws(
     websocket: WebSocket
 ):
     await websocket.accept()

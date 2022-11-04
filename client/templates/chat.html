@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ url_for('static', path='/style.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', path='/script.js') }}" defer></script>
+    <title>WS Chat</title>
+</head>
+<body>
+    <section class="auth login">
+        <h1>WS Chat Login</h1>
+        <form action="" method="POST">
+            <input id = "email" type="email" name="email" placeholder="Email" required>
+            <input id = "password" type="password" name="password" placeholder="Password" required>
+            <div class="auth_menu">
+                <button>Login</button>
+                <button id="register">Register</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="auth hidden register">
+        <h1>WS Chat Register</h1>
+        <form action="" method="POST">
+            <input id = "register_email" type="email" name="email" placeholder="Email" required>
+            <input id = "register_password" type="password" name="password" placeholder="Password" required>
+            <div class = "auth_menu">
+                <button id="register_login">Register and login</button>
+                <button id="register_back">Back</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="chat hidden">
+        <h1>WS Chat</h1>
+        <form class= "send_form">
+            <input type="text" id="messageText" placeholder="Enter your message here"/>
+            <button>Send</button>
+        </form>
+        <div class="chat_messages">
+        </div>
+    </section>
+</body>
+</html>

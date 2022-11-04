@@ -9,6 +9,7 @@ from core.logger import LOGGING
 from db.events import init_models, setup_deps, close_connections
 from api.router import router as api_router
 from api.dependencies.auth import get_current_user, fastapi_users_app
+from services.context import ChatMiddleware
 
 
 def create_app(settings) -> FastAPI:
@@ -37,6 +38,7 @@ def create_app(settings) -> FastAPI:
     )
     
     app.mount("/client", StaticFiles(directory="client"), name="static")
+    app.add_middleware(ChatMiddleware)
     return app
 
 
