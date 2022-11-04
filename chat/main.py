@@ -2,11 +2,13 @@ import logging
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from core.settings import get_settings
 from core.logger import LOGGING
 from db.events import init_models, setup_deps, close_connections
 from api.router import router as api_router
+from api.dependencies.auth import get_current_user, fastapi_users_app
 
 
 def create_app(settings) -> FastAPI:
@@ -19,6 +21,7 @@ def create_app(settings) -> FastAPI:
     )
 
     mongodb, redis = setup_deps(app, settings)
+    app.dependency_overrides[get_current_user] = lambda: fastapi_users_app.current_user()
 
     async def startup():
         await init_models(settings, mongodb)
@@ -28,11 +31,12 @@ def create_app(settings) -> FastAPI:
 
     app.add_event_handler("shutdown", shutdown)
     app.add_event_handler("startup", startup)
-
     app.include_router(
         router=api_router,
         prefix="/api",
     )
+    
+    app.mount("/client", StaticFiles(directory="client"), name="static")
     return app
 
 

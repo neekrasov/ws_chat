@@ -16,6 +16,8 @@ pydantic = {extras = ["dotenv"], version = "^1.10.2"}
 orjson = "^3.8.1"
 beanie = "^1.13.1"
 fastapi-users = {extras = ["beanie", "redis"], version = "^10.2.0"}
+websockets = "^10.4"
+jinja2 = "^3.1.2"
 
 
 [build-system]
