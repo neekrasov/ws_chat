@@ -1,42 +1,63 @@
-"stict mode";
+"strict mode";
+
+let states = {
+    backFromRegister: () => {
+        document.querySelector('.login').classList.remove('hidden');
+        document.querySelector('.register').classList.add('hidden');
+    },
+    registerFromLogin: () => {
+        document.querySelector('.login').classList.add('hidden');
+        document.querySelector('.register').classList.remove('hidden');
+    },
+    loginRedirectFromRegister: () => {
+        document.querySelector('.register').classList.add('hidden');
+        document.querySelector('.chat').classList.remove('hidden');
+    },
+    loginRedirectFromLogin: () => {
+        document.querySelector('.login').classList.add('hidden');
+        document.querySelector('.chat').classList.remove('hidden');
+    },
+    acceptConnectionToChat: () => {
+        document.querySelector('.chat__send-data').classList.remove('hidden');
+        document.querySelector('.chat__connection').classList.add('hidden');
+    }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
 
     let registerButton = document.querySelector('#register');
     registerButton.addEventListener('click', e => {
         e.preventDefault();
-        document.querySelector('.login').classList.add('hidden');
-        document.querySelector('.register').classList.remove('hidden');
+        states.registerFromLogin();
     });
 
     let registerBackButton = document.querySelector('#register_back');
     registerBackButton.addEventListener('click', e => {
         e.preventDefault();
-        document.querySelector('.login').classList.remove('hidden');
-        document.querySelector('.register').classList.add('hidden');
+        states.backFromRegister();
     });
 
     let registerAndLoginButton = document.querySelector('#register_login');
     registerAndLoginButton.addEventListener('click', e => {
         e.preventDefault();
 
+        let username = document.querySelector('#register_username');
         let email = document.querySelector('#register_email');
         let password = document.querySelector('#register_password');
 
-        let response = register(email.value, password.value);
-        response.then(register_status => {
-            if (register_status.ok) {
-                loginRedirect(email.value, password.value).then(status => {
-                    if (status){
-                        document.querySelector('.register').classList.add('hidden');
-                        document.querySelector('.chat').classList.remove('hidden');
-                    }
-                });
-            } else {
-                alert('Registration failed');
-            }
-        });
-        
+        register(email.value, password.value, username.value)
+            .then(register_status => {
+                if (register_status.ok) {
+                    loginRedirect(email.value, password.value).then(status => {
+                        if (status) {
+                            states.loginRedirectFromRegister();
+                        }
+                    });
+                } else {
+                    alert('Registration failed');
+                }
+            });
+
     });
 
     let loginForm = document.querySelector('.login form');
@@ -46,33 +67,59 @@ document.addEventListener('DOMContentLoaded', () => {
         let password = document.querySelector('#password');
         loginRedirect(email.value, password.value).then((status) => {
             if (status) {
-                document.querySelector('.login').classList.add('hidden');
-                document.querySelector('.chat').classList.remove('hidden');
+                states.loginRedirectFromLogin();
             } else {
                 alert('Login failed');
             }
         });
     });
+
+    let chatConnForm = document.querySelector('.chat .chat__connection');
+    chatConnForm.addEventListener('submit', e => {
+        e.preventDefault();
+        let room_id = document.querySelector('#chat_id');
+        wsAcceptConnectionToRoom(room_id.value);
+        states.acceptConnectionToChat();
+    });
+
+
 });
 
-async function loginRedirect(email, password){
+async function wsAcceptConnectionToRoom(room_id) {
+    let token = localStorage.getItem('token');
+    await fetch(`/api/v1/chat/connect/${room_id}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + token
+        }
+    }).then(response => {
+        console.log(response);
+        if (response.ok) return response.headers
+        else alert('You are not authorized');
+    }).then(headers => {
+        if (headers.has('x-data-token')) {
+            setWsConnection(headers.get('x-data-token'));
+        }
+    });
+}
+
+async function loginRedirect(email, password) {
     return login(email, password).then(response => {
         if (response.ok) {
-            setWsConnection();
             return response.json()
         } else {
             return null;
         }
     }).then(data => {
         if (data) {
-            localStorage.setItem('token', data.token);
+            localStorage.setItem('token', data.access_token);
             return true;
         }
         return false;
     });
 }
 
-async function login(email, password){
+async function login(email, password) {
     let response = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: {
@@ -86,7 +133,7 @@ async function login(email, password){
     return response
 }
 
-async function register(email, password){
+async function register(email, password, username) {
     let response = await fetch('/api/v1/auth/register', {
         method: 'POST',
         headers: {
@@ -94,15 +141,16 @@ async function register(email, password){
         },
         body: JSON.stringify({
             'email': email,
-            'password': password
+            'password': password,
+            'username': username
         })
     });
     return response;
 }
 
-function setWsConnection(){
-    let ws = new WebSocket("ws://localhost:8000/api/v1/chat/ws");
-    let chatForm  = document.querySelector('.chat .send_form');
+function setWsConnection(data_token) {
+    let ws = new WebSocket(`ws://localhost:8000/api/v1/chat/ws?data_token=${data_token}`);
+    let chatForm = document.querySelector('.chat .chat__send-data .send_form');
 
     chatForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -111,14 +159,14 @@ function setWsConnection(){
             ws.send(message.value);
             message.value = "";
         }
-    }); 
+    });
 
     ws.addEventListener("message", (e) => {
         createMessage(e.data);
     });
 };
 
-function createMessage(text){
+function createMessage(text) {
     let messages = document.querySelector('.chat_messages')
 
     let message = document.createElement('div')

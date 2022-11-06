@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     mongodb_port: int = 27017
     mongodb_name: str = "messenger"
     api_prefix: str = "/api"
+    encryption_secret: str = "secret"
     secret: str
 
     class Config:

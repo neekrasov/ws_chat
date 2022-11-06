@@ -3,7 +3,7 @@ from beanie import PydanticObjectId
 
 
 class User(BeanieBaseUser[PydanticObjectId]):
-    pass
+    username: str
 
 
 async def get_user_db() -> BeanieUserDatabase:

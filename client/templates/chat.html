@@ -24,6 +24,7 @@
     <section class="auth hidden register">
         <h1>WS Chat Register</h1>
         <form action="" method="POST">
+            <input id = "register_username" type="text" name="username" placeholder="Username" required>
             <input id = "register_email" type="email" name="email" placeholder="Email" required>
             <input id = "register_password" type="password" name="password" placeholder="Password" required>
             <div class = "auth_menu">
@@ -35,10 +36,18 @@
 
     <section class="chat hidden">
         <h1>WS Chat</h1>
-        <form class= "send_form">
-            <input type="text" id="messageText" placeholder="Enter your message here"/>
-            <button>Send</button>
-        </form>
+        <div class="chat__connection">
+            <form>
+                <input type="text" id="chat_id" placeholder="Enter chat id"/>
+                <button>Connect</button>
+            </form>
+        </div>
+        <div class="chat__send-data hidden"> 
+            <form class= "send_form hidden">
+                <input type="text" id="messageText" placeholder="Enter your message here"/>
+                <button>Send</button>
+            </form>
+        </div>
         <div class="chat_messages">
         </div>
     </section>

@@ -3,12 +3,11 @@ from beanie import PydanticObjectId
 
 
 class UserRead(schemas.BaseUser[PydanticObjectId]):
-    pass
+    username: str
 
 
 class UserCreate(schemas.BaseUserCreate):
-    pass
-
+    username: str
 
 class UserUpdate(schemas.BaseUserUpdate):
-    pass
+    username: str
