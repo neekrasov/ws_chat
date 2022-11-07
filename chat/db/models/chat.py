@@ -13,7 +13,7 @@ class Message(Document):
 class Room(Document):
     name: str
     members: list[PydanticObjectId]
-    messages: list[PydanticObjectId]
+    messages: list[PydanticObjectId] = []
 
     class Settings:
         name = "rooms"

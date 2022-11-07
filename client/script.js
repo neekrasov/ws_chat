@@ -93,13 +93,21 @@ async function wsAcceptConnectionToRoom(room_id) {
             'Authorization': 'Bearer ' + token
         }
     }).then(response => {
-        console.log(response);
-        if (response.ok) return response.headers
-        else alert('You are not authorized');
+        if (response.ok)
+            return response.headers
+        else if (response.status === 401) 
+            alert('You are not authorized');
+        else if (response.status === 404) 
+            alert('Room not found');
+        else if (response.status === 403) 
+            alert('You are not allowed to connect to this room');
+        else alert('Something went wrong');
+        
     }).then(headers => {
         if (headers.has('x-data-token')) {
             setWsConnection(headers.get('x-data-token'));
         }
+        return null;
     });
 }
 
@@ -108,7 +116,7 @@ async function loginRedirect(email, password) {
         if (response.ok) {
             return response.json()
         } else {
-            return null;
+            return false;
         }
     }).then(data => {
         if (data) {
@@ -161,24 +169,43 @@ function setWsConnection(data_token) {
         }
     });
 
-    ws.addEventListener("message", (e) => {
-        createMessage(e.data);
-    });
+    ws.onopen = () => {
+        console.log('Connection established');
+    };
+
+    ws.onmessage = (event) => {
+        data = JSON.parse(event.data);
+        createMessage(data["username"], data['message']);
+    };
+
+    ws.onclose = (event) => {
+        if (event.wasClean) {
+            console.log('Connection closed');
+        } else {
+            console.log('Connection broken');
+        }
+        console.log('Code: ' + event.code + ' reason: ' + event.reason);
+    };
 };
 
-function createMessage(text) {
-    let messages = document.querySelector('.chat_messages')
+function createMessage(username, text) {
+    let messages = document.querySelector('.chat_messages');
 
-    let message = document.createElement('div')
-    message.classList.add('message__wrapper');
-    let message_text = document.createElement('div')
+    let message = document.createElement('div');
+    message.classList.add(`message__wrapper`);
+
+    let message_text = document.createElement('div');
+    let message_username = document.createElement('div');
+    let message_time = document.createElement('div');
+    message_username.classList.add('message_username');
     message_text.classList.add('message_text');
-    let message_time = document.createElement('div')
     message_time.classList.add('message_time');
 
+    message_username.innerText = username;
     message_text.innerHTML = text;
     message_time.innerHTML = new Date().toLocaleTimeString();
 
+    message.appendChild(message_username);
     message.appendChild(message_text);
     message.appendChild(message_time);
 

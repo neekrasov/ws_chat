@@ -1,24 +1,28 @@
+import asyncio
+from fastapi.websockets import WebSocket, WebSocketDisconnect
 from redis.asyncio import Redis
 from db.models import Room, Message, User
+from pydantic.error_wrappers import ValidationError
+import logging
 
 
 class RedisService:
     def __init__(self, redis: Redis):
         self._redis = redis
 
-    def _make_user_key(self, user_id: str, username: str) -> str:
-        return f"user:{user_id}:{username}"
+    def _make_user_key(self, username: str) -> str:
+        return f"user:{username}"
 
     def _make_room_key(self, chat_id: str) -> str:
         return f"room:{chat_id}"
 
-    async def add_user_to_room(self, user_id: str, username: str, room_id: str):
-        user_key = self._make_user_key(user_id, username)
+    async def add_user_to_room(self, username: str, room_id: str):
+        user_key = self._make_user_key(username)
         room_key = self._make_room_key(room_id)
         await self._redis.sadd(room_key, user_key)
 
-    async def remove_user_from_room(self, user_id: str, username: str, room_id: str):
-        user_key = self._make_user_key(user_id, username)
+    async def remove_user_from_room(self, username: str, room_id: str):
+        user_key = self._make_user_key(username)
         room_key = self._make_room_key(room_id)
         await self._redis.srem(room_key, user_key)
 
@@ -27,10 +31,24 @@ class RedisService:
         users = await self._redis.smembers(room_key)
         return [User.parse_raw(user) for user in users]
 
-    async def user_room_exists(self, user_id: str, username: str, room_id: str) -> bool:
-        user_key = self._make_user_key(user_id, username)
+    async def user_room_exists(self, username: str, room_id: str) -> bool:
+        user_key = self._make_user_key(username)
         room_key = self._make_room_key(room_id)
         return await self._redis.sismember(room_key, user_key)
+    
+    
+    async def send_message_to_stream(self, room_id: str, fields):
+        await self._redis.xadd(name=f"room:{room_id}:stream", 
+                               fields=fields,
+                               maxlen=1000)
+    
+    async def read_data_stream(self, room_id: str, last_id: str = b"$"):
+        stream = f"room:{room_id}:stream"
+        events = await self._redis.xread(
+            streams={stream: last_id},
+            block=0)
+        return events
+
 
 
 class ChatService:
@@ -44,10 +62,44 @@ class ChatService:
         self._rooms = room_collection
         self._messages = message_collection
 
-    def make_chat_info(self, user: User, room_id: str) -> dict:
-        return f"{user.username}:{room_id}"
+    def make_chat_info(self, user: User, room: Room) -> str:
+        return f"{user.id}:{user.username};{room.id}:{room.name}"
 
     async def create_chat(self, user: User, chat_name: str) -> Room:
-        room = await self._rooms.insert_one(Room(name=chat_name))
+        room = await self._rooms.insert_one(Room(name=chat_name, members=[user.id]))
         await self.redis_service.add_user_to_room(user.id, user.username, room.id)
         return room
+    
+    async def get_chat(self, room_id: str) -> Room:
+        try:
+            chat = await self._rooms.get(room_id)
+        except ValidationError:
+            return None
+        return chat
+    
+    async def ws_receive(self, websocket: WebSocket, username, room_id):
+        await self.redis_service.add_user_to_room(username, room_id)
+        try:
+            while True:
+                message = await websocket.receive_json()
+                
+                fields = {
+                    'username': username,
+                    'message': message,
+                    'room': room_id,
+                }
+                await self.redis_service.send_message_to_stream(room_id, fields)
+        except WebSocketDisconnect:
+            await self.redis_service.remove_user_from_room(username, room_id)
+            await websocket.close()
+    
+    async def ws_send(self, websocket: WebSocket, room_id):
+        last_id = b"$"
+        while True:
+            events = await self.redis_service.read_data_stream(room_id, last_id)
+            for event in events:
+                last_id = event[1][0][0]
+                fields = event[1][0][1]
+            await websocket.send_json(fields)
+            await asyncio.sleep(1)
+        
