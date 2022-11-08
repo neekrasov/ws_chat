@@ -11,6 +11,7 @@ from db.models import User, Room
 from schemas.chat import ChatCreate
 import logging
 import asyncio
+import json
 
 
 
@@ -38,11 +39,14 @@ async def accept(
     
     if user.id not in room.members:
         raise HTTPException(status_code=403, detail="User is not a member of this room")
-    
+        
     chat_info = chat_service.make_chat_info(user, room)
-    encrypted_chat_info = rncryptor.encrypt(chat_info, settings.encryption_secret)
+    encrypted_chat_info= rncryptor.encrypt(chat_info, settings.encryption_secret)
     return Response(
-        headers={"x-data-token": encrypted_chat_info.hex()}, status_code=200
+        content=json.dumps(room.dict(exclude={'id', 'members', 'messages'})), 
+        media_type="application/json",
+        headers={"x-data-token": encrypted_chat_info.hex()},
+        status_code=200
     )
 
 @router.post("/create", response_model=Room)

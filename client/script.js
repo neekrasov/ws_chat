@@ -1,5 +1,5 @@
 "strict mode";
-
+let ws=null;
 let states = {
     backFromRegister: () => {
         document.querySelector('.login').classList.remove('hidden');
@@ -14,13 +14,27 @@ let states = {
         document.querySelector('.chat').classList.remove('hidden');
     },
     loginRedirectFromLogin: () => {
+        let chat = document.querySelector('.chat');
         document.querySelector('.login').classList.add('hidden');
-        document.querySelector('.chat').classList.remove('hidden');
+        chat.classList.remove('hidden');
+        chat.classList.add('connection_state');
     },
     acceptConnectionToChat: () => {
+        document.querySelector('.chat').classList.remove('connection_state');
+        document.querySelector('.chat_messages').classList.remove('hidden');
         document.querySelector('.chat__send-data').classList.remove('hidden');
         document.querySelector('.chat__connection').classList.add('hidden');
-    }
+        document.querySelector('#chat-change_btn').classList.remove('hidden');
+        document.querySelector('.chat-user-info__username').classList.remove('hidden');
+    },
+    changeChat: () => {
+        document.querySelector('.chat').classList.add('connection_state');
+        document.querySelector('.chat_messages').classList.add('hidden');
+        document.querySelector('.chat__send-data').classList.add('hidden');
+        document.querySelector('.chat__connection').classList.remove('hidden');
+        document.querySelector('#chat-change_btn').classList.add('hidden');
+        document.querySelector('.chat-user-info__username').classList.add('hidden');
+    },
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -78,37 +92,77 @@ document.addEventListener('DOMContentLoaded', () => {
     chatConnForm.addEventListener('submit', e => {
         e.preventDefault();
         let room_id = document.querySelector('#chat_id');
-        wsAcceptConnectionToRoom(room_id.value);
-        states.acceptConnectionToChat();
+        wsAcceptConnectionToRoom(room_id.value).then(() => {
+            setUserInfo();
+            states.acceptConnectionToChat();
+        }).catch(error => {
+            alert(error.message);
+        });
+
     });
 
-
+    let chatChangeBtn = document.querySelector('#chat-change_btn');
+    chatChangeBtn.addEventListener('click', e => {
+        e.preventDefault();
+        states.changeChat();
+        if (ws) {
+            ws.close(1000, 'User changed chat');
+        }
+    });
 });
+
+async function setUserInfo() {
+    let user = await getCurrentUser();
+    if (user) {
+        document.querySelector('.chat-user-info__username').innerHTML = user.username;
+    }
+}
+
+async function getCurrentUser() {
+    let token = localStorage.getItem('token');
+    return fetch('/api/v1/users/me', {
+        method: 'GET',
+        headers: {'Authorization': 'Bearer ' + token}
+    }).then(response => {
+        if (response.ok) {
+            return response.json();
+        } else {
+            return false;
+        }
+    }).then(data => {
+        if (data) {
+            return data;
+        }
+        return false;
+    });
+}
 
 async function wsAcceptConnectionToRoom(room_id) {
     let token = localStorage.getItem('token');
     await fetch(`/api/v1/chat/connect/${room_id}`, {
         method: 'GET',
-        headers: {
-            'Authorization': 'Bearer ' + token
-        }
+        headers: {'Authorization': 'Bearer ' + token}
     }).then(response => {
-        if (response.ok)
-            return response.headers
-        else if (response.status === 401) 
-            alert('You are not authorized');
-        else if (response.status === 404) 
-            alert('Room not found');
+        if (response.ok){
+            if (response.headers.has('x-data-token')) {
+                setWsConnection(response.headers.get('x-data-token'));
+                return response.json();
+            }
+            throw new Error('Connection failed');
+        }else if (response.status === 401)
+            throw new Error('You are not authorized');
+        else if (response.status === 404)
+            throw new Error('Room not found');
         else if (response.status === 403) 
-            alert('You are not allowed to connect to this room');
-        else alert('Something went wrong');
-        
-    }).then(headers => {
-        if (headers.has('x-data-token')) {
-            setWsConnection(headers.get('x-data-token'));
-        }
-        return null;
-    });
+            throw new Error('You are not allowed to connect to this room');
+        else throw new Error('Connection failed');
+    }).then(data => {
+        changeChatHeader(data.name);
+    })
+}
+
+async function changeChatHeader(chat_name){
+    document.querySelector('.chat__header h1').innerHTML = chat_name;
 }
 
 async function loginRedirect(email, password) {
@@ -157,14 +211,14 @@ async function register(email, password, username) {
 }
 
 function setWsConnection(data_token) {
-    let ws = new WebSocket(`ws://localhost:8000/api/v1/chat/ws?data_token=${data_token}`);
+    ws = new WebSocket(`ws://localhost:8000/api/v1/chat/ws?data_token=${data_token}`);
     let chatForm = document.querySelector('.chat .chat__send-data .send_form');
 
     chatForm.addEventListener('submit', (e) => {
         e.preventDefault();
         let message = document.querySelector('#messageText');
         if (message.value != "") {
-            ws.send(message.value);
+            ws.send(JSON.stringify(message.value));
             message.value = "";
         }
     });
@@ -189,10 +243,17 @@ function setWsConnection(data_token) {
 };
 
 function createMessage(username, text) {
+    let currentUser = document.querySelector('.chat-user-info__username').innerHTML;
+
+
     let messages = document.querySelector('.chat_messages');
 
     let message = document.createElement('div');
     message.classList.add(`message__wrapper`);
+
+    if (currentUser !== username) {
+        message.classList.add('message__companion');
+    }
 
     let message_text = document.createElement('div');
     let message_username = document.createElement('div');

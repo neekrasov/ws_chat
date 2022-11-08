@@ -35,20 +35,24 @@
     </section>
 
     <section class="chat hidden">
-        <h1>WS Chat</h1>
+        <div class="chat__header">
+            <div class="chat-user-info__username hidden"></div>
+            <h1>WS Chat</h1>
+            <button id="chat-change_btn" class="hidden">Change chat</button>
+        </div>
         <div class="chat__connection">
             <form>
                 <input type="text" id="chat_id" placeholder="Enter chat id"/>
                 <button>Connect</button>
             </form>
         </div>
+        <div class="chat_messages hidden">
+        </div>
         <div class="chat__send-data hidden"> 
-            <form class= "send_form hidden">
+            <form class= "send_form">
                 <input type="text" id="messageText" placeholder="Enter your message here"/>
                 <button>Send</button>
             </form>
-        </div>
-        <div class="chat_messages">
         </div>
     </section>
 </body>

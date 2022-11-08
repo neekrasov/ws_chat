@@ -13,13 +13,18 @@ body {
 }
 
 .chat, .auth {
-    width: 400px;
-    max-height: 600px;
+    width: 800px;
+    height: 480px;
     margin: 100px auto;
     padding: 20px 20px 9px;
     background: #232324;
     border-radius: 30px;
     box-shadow: 0px 4px #009de4, 0px 10px 15px rgba(0, 0, 0, 0.2);
+}
+
+.auth {
+    width: 400px;
+    height: 250px;
 }
 
 .chat h1, .auth h1 {
@@ -43,8 +48,7 @@ body {
     font-size: 16px;
 }
 
-.chat form button, .auth form button {
-    display: block;
+.chat form button, .auth form button, #chat-change_btn, .chat-user-info__username {
     margin: 0 auto;
     margin-top: 20px;
     cursor: pointer;
@@ -70,34 +74,116 @@ body {
 .chat .chat_messages {
     border-radius: 10px;
     margin-top: 20px;
-    max-height: 310px;
+    height: 310px;
     overflow-y: scroll;
 }
 
 .chat .chat_messages::-webkit-scrollbar {
-    width: 10px;
+    width: 0;
 }
 
 .chat .chat_messages .message__wrapper {
-    background-color: #009de4;
-    max-width: 50%;
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
+    position: relative;
+    display: block;
+    min-width: 20%;
+    max-width: 70%;
+    width: min-content;
+    min-height: 80px;
+    background-color: #42afe2;
+    border-radius: 25px;
     margin-bottom: 20px;
     padding-bottom: 5px;
 }
 
+.chat .chat_messages .message__wrapper .message_username {
+    display: inline-block;
+    position: absolute;
+    left: 5px;
+    top: 0px;
+    margin-top: 5px;
+    font-weight: 600;
+    font-size: 15px;
+    color: #fff;
+    text-align: left;
+    margin-left: 10px;
+    background-image: linear-gradient(to right,  rgba(48,12,174,1) 0%, rgba(181,1,162,1) 100%);
+    border-radius: 10px;
+    padding: 1px 6px;
+}
+
 .chat .chat_messages .message__wrapper .message_text {
+    margin-top: 25px;
+    display: inline-block;
+    max-width: 100%;
+    word-wrap: break-word;
     padding: 10px 20px;
     border-radius: 10px;
     font-size: 16px;
     color: #fff;
 }
 .chat .chat_messages .message__wrapper .message_time {
-    margin-top: 5px;
+    position: absolute;
+    bottom: 5px;
+    right: 20px;
+    font-weight: 600;
     font-size: 12px;
     color: #fff;
     text-align: right;
-    margin-right: 10px;
+    margin-left: auto;
+    opacity: 0.5;
+}
+
+.chat__send-data {
+    margin-top: 32px;
+}
+
+.chat__send-data .send_form{
+    display: grid;
+    grid-template-columns: 78% 20%;
+    gap: 20px;
+}
+
+.chat__send-data .send_form input {
+    width: 100%;
+}
+
+.chat__send-data .send_form button {
+    margin: 0;
+    height: 40px;
+}
+
+.register {
+    width: 400px;
+    height: 300px;
+}
+
+.connection_state {
+    width: 400px;
+    height: 200px;
+}
+
+.chat__header{
+    position: relative;
+}
+
+#chat-change_btn {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    margin-top: 0px;
+}
+
+.chat-user-info__username {
+    background-image: linear-gradient(to right,  rgb(105, 87, 173) 0%, rgb(1, 43, 181) 100%);
+    cursor: default;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    margin-top: 0px;
+}
+
+.message__companion {
+    margin-right: 0 !important;
+    margin-left: auto;
+    background-color: #009de4 !important;
 }
