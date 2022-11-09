@@ -5,24 +5,46 @@
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 body {
     background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(9,9,121,1) 35%, rgba(0,212,255,1) 100%);
 }
 
-.chat, .auth {
+.chat, .auth, .user-info {
     width: 800px;
     height: 480px;
-    margin: 100px auto;
+    margin: 50px auto;
     padding: 20px 20px 9px;
     background: #232324;
     border-radius: 30px;
     box-shadow: 0px 4px #009de4, 0px 10px 15px rgba(0, 0, 0, 0.2);
 }
 
+.user-info {
+    width: 400px;
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.user-info .user-info-username {
+    font-weight: 600;
+    font-size: 30px;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.user-info .user-info-id {
+    font-size: 20px;
+    color: #fff;
+}
+
 .auth {
+    margin-top: 100px;
     width: 400px;
     height: 250px;
 }
@@ -233,4 +255,64 @@ button:hover {
     left: 70px;
     position: absolute;
 
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-y: scroll;
+    padding: 60px 15px;
+}
+
+.modal .modal-content {
+    /* display: flex;
+    align-items: center;
+    justify-content: center; */
+    width: 100%;
+    padding: 20px 30px;
+    max-width: 300px;
+    background: #f9f9f9;
+    border-radius: 15px;
+    position: relative;
+    box-shadow: 0 5px 15px black;
+}
+
+.modal .modal-content .close {
+    position: absolute;
+    top: 5px;
+    right: 0px;
+    width: 20px;
+    height: 30px;
+    opacity: 0.3;
+    cursor: pointer;
+}
+
+.modal .modal-content .close:hover {
+    opacity: 1;
+}
+
+.modal .modal-content form input {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.modal .modal-content form button {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background: #690c9e;
+    color: #fff;
+    font-size: 16px;
+    margin-top: 10px;
 }

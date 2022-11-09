@@ -1,6 +1,11 @@
 from fastapi import Depends, FastAPI
 from services.chat import ChatService, RedisService
-from .db import get_redis_stub, get_room_collection_stub, get_message_collection_stub
+from .db import (
+    get_redis_stub,
+    get_room_collection_stub,
+    get_message_collection_stub,
+    get_user_collection_stub,
+)
 
 
 async def get_redis_service_stub():
@@ -19,8 +24,11 @@ async def get_chat_service(
     redis_service=Depends(get_redis_service_stub),
     room_collection=Depends(get_room_collection_stub),
     message_collection=Depends(get_message_collection_stub),
+    user_collection=Depends(get_user_collection_stub),
 ) -> ChatService:
-    return ChatService(redis_service, room_collection, message_collection)
+    return ChatService(
+        redis_service, user_collection, room_collection, message_collection
+    )
 
 
 def setup_service_deps(app: FastAPI):

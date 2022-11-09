@@ -9,7 +9,6 @@ from api.dependencies.auth import get_current_user_stub
 from core.settings import get_settings
 from db.models import User, Room
 from schemas.chat import ChatCreate, UserInChatCreate
-import logging
 import asyncio
 import json
 
@@ -25,10 +24,9 @@ async def accept(
     user: User = Depends(get_current_user_stub),
 ):
     room = await chat_service.get_chat(room_id)
+
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
-
-    logging.info(f"User `{user.username}` trying to connect to room `{room.name}` ")
 
     if user.id not in room.members:
         raise HTTPException(status_code=403, detail="User is not a member of this room")
@@ -36,7 +34,9 @@ async def accept(
     chat_info = chat_service.make_chat_info(user, room)
     encrypted_chat_info = rncryptor.encrypt(chat_info, settings.encryption_secret)
     return Response(
-        content=json.dumps(room.dict(exclude={"id", "members", "messages"})),
+        content=json.dumps(
+            room.dict(exclude={"id", "members", "messages", "admin_id"})
+        ),
         media_type="application/json",
         headers={"x-data-token": encrypted_chat_info.hex()},
         status_code=200,
@@ -57,12 +57,18 @@ async def create_chat(
 async def add_user_to_chat(
     create_data: UserInChatCreate,
     chat_service: ChatService = Depends(get_chat_service_stub),
+    initiator: User = Depends(get_current_user_stub),
 ):
     user_id = create_data.user_id
     room_id = create_data.room_id
 
     room = await chat_service.get_chat(room_id)
-    user = await chat_service.get_user(user_id)
+    user = await chat_service.get_user(str(user_id))
+
+    if initiator.id != room.admin_id:
+        raise HTTPException(
+            status_code=403, detail="You do not have permission to add a user"
+        )
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -73,7 +79,7 @@ async def add_user_to_chat(
     if user_id in room.members:
         raise HTTPException(status_code=403, detail="User is already in this chat")
 
-    await chat_service.add_user_to_room(user_id, room)
+    await chat_service.add_user_to_chat(user_id, room_id)
     return Response(status_code=200)
 
 

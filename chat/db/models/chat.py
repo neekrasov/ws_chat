@@ -11,6 +11,7 @@ class Message(Document):
 
 
 class Room(Document):
+    admin_id: PydanticObjectId
     name: str
     members: list[PydanticObjectId]
     messages: list[PydanticObjectId] = []

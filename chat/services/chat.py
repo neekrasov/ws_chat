@@ -51,10 +51,12 @@ class ChatService:
     def __init__(
         self,
         redis_service: RedisService,
+        user_collection: User,
         room_collection: Room,
         message_collection: Message,
     ):
         self.redis_service = redis_service
+        self._users = user_collection
         self._rooms = room_collection
         self._messages = message_collection
 
@@ -62,7 +64,9 @@ class ChatService:
         return f"{user.id}:{user.username};{room.id}:{room.name}"
 
     async def create_chat(self, user: User, chat_name: str) -> Room:
-        room = await self._rooms.insert_one(Room(name=chat_name, members=[user.id]))
+        room = await self._rooms.insert_one(
+            Room(admin_id=user.id, name=chat_name, members=[user.id])
+        )
         return room
 
     async def get_chat(self, room_id: str) -> Room:
@@ -73,16 +77,13 @@ class ChatService:
         return chat
 
     async def get_user(self, user_id: str) -> User:
-        try:
-            user = await self._users.get(user_id)
-        except ValidationError:
-            return None
+        user = await self._users.get(user_id)
         return user
 
     async def add_user_to_chat(self, user_id, room_id: str) -> Room:
         room = await self._rooms.get(room_id)
         room.members.append(user_id)
-        room.save()
+        await room.save()
         return room
 
     async def get_user_chats(self, user_id: str) -> list[Room]:
