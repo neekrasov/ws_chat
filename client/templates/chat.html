@@ -14,7 +14,7 @@
         <form action="" method="POST">
             <input id = "email" type="email" name="email" placeholder="Email" required>
             <input id = "password" type="password" name="password" placeholder="Password" required>
-            <div class="auth_menu">
+            <div class="menu">
                 <button>Login</button>
                 <button id="register">Register</button>
             </div>
@@ -27,7 +27,7 @@
             <input id = "register_username" type="text" name="username" placeholder="Username" required>
             <input id = "register_email" type="email" name="email" placeholder="Email" required>
             <input id = "register_password" type="password" name="password" placeholder="Password" required>
-            <div class = "auth_menu">
+            <div class = "menu">
                 <button id="register_login">Register and login</button>
                 <button id="register_back">Back</button>
             </div>
@@ -35,25 +35,43 @@
     </section>
 
     <section class="chat hidden">
+
         <div class="chat__header">
             <div class="chat-user-info__username hidden"></div>
-            <h1>WS Chat</h1>
+            <h1>Connection menu</h1>
             <button id="chat-change_btn" class="hidden">Change chat</button>
+            <button id="chat-add-user_btn" class="hidden">Add user</button>
         </div>
+
         <div class="chat__connection">
-            <form>
+            <form class="chat_connection-id">
                 <input type="text" id="chat_id" placeholder="Enter chat id"/>
-                <button>Connect</button>
+                <button id="chat__connection_apply-btn">Connect</button>
+            </form>
+
+            <form class="chat__create-form">
+                <input type="text" id="chat_name" placeholder="Enter the name"/>
+                <button id="chat__create-btn">Create</button>
+            </form>
+
+            <form class="chat__select-form">
+                <select class="chat__select-el">
+                    <option value="default">Select your chats</option>
+                </select>
+                <button id="chat__select-confirm-btn">Select</button>
             </form>
         </div>
+
         <div class="chat_messages hidden">
         </div>
+
         <div class="chat__send-data hidden"> 
             <form class= "send_form">
                 <input type="text" id="messageText" placeholder="Enter your message here"/>
                 <button>Send</button>
             </form>
         </div>
+
     </section>
 </body>
 </html>

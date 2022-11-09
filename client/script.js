@@ -12,12 +12,14 @@ let states = {
     loginRedirectFromRegister: () => {
         document.querySelector('.register').classList.add('hidden');
         document.querySelector('.chat').classList.remove('hidden');
+        fillSelect();
     },
     loginRedirectFromLogin: () => {
         let chat = document.querySelector('.chat');
         document.querySelector('.login').classList.add('hidden');
         chat.classList.remove('hidden');
         chat.classList.add('connection_state');
+        fillSelect();
     },
     acceptConnectionToChat: () => {
         document.querySelector('.chat').classList.remove('connection_state');
@@ -26,6 +28,7 @@ let states = {
         document.querySelector('.chat__connection').classList.add('hidden');
         document.querySelector('#chat-change_btn').classList.remove('hidden');
         document.querySelector('.chat-user-info__username').classList.remove('hidden');
+        document.querySelector('#chat-add-user_btn').classList.remove('hidden');
     },
     changeChat: () => {
         document.querySelector('.chat').classList.add('connection_state');
@@ -34,6 +37,8 @@ let states = {
         document.querySelector('.chat__connection').classList.remove('hidden');
         document.querySelector('#chat-change_btn').classList.add('hidden');
         document.querySelector('.chat-user-info__username').classList.add('hidden');
+        document.querySelector('#chat-add-user_btn').classList.add('hidden');
+        changeChatHeader('Connection menu');
     },
 }
 
@@ -88,17 +93,46 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    let chatConnForm = document.querySelector('.chat .chat__connection');
-    chatConnForm.addEventListener('submit', e => {
+    let chatConnByIdForm = document.querySelector('.chat .chat__connection .chat_connection-id');
+    chatConnByIdForm.addEventListener('submit', e => {
         e.preventDefault();
-        let room_id = document.querySelector('#chat_id');
-        wsAcceptConnectionToRoom(room_id.value).then(() => {
+        let chat_id = document.querySelector('#chat_id');
+        if (chat_id.value){
+            wsAcceptConnectionToRoom(chat_id.value).then(() => {
+                setUserInfo();
+                states.acceptConnectionToChat();
+            }).catch(error => {
+                alert(error.message);
+            });
+        }
+    });
+
+    let chatCreateForm = document.querySelector('.chat .chat__connection .chat__create-form');
+    chatCreateForm.addEventListener('submit', e => {
+        e.preventDefault();
+        let chatName = document.querySelector('#chat_name');
+        createChat(chatName.value).then(data => {
+            if (data) {
+                console.log(data);
+                alert('Chat created, id: ' + data._id);
+            } else {
+                alert('Chat creation failed');
+            }
+        });
+    });
+
+    let chatSelectionForm = document.querySelector('.chat .chat__connection .chat__select-form');
+
+    chatSelectionForm.addEventListener('submit', e => {
+        e.preventDefault();
+        let select = document.querySelector('.chat .chat__select-form .chat__select-el');
+        let chat_id = select.options[select.selectedIndex].value;
+        wsAcceptConnectionToRoom(chat_id).then(() => {
             setUserInfo();
             states.acceptConnectionToChat();
         }).catch(error => {
             alert(error.message);
         });
-
     });
 
     let chatChangeBtn = document.querySelector('#chat-change_btn');
@@ -110,6 +144,55 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+async function fillSelect() {
+    let chats = await getMyChats();
+    console.log(chats);
+    if (chats){
+        let select = document.querySelector('.chat .chat__select-form .chat__select-el');
+        chats.forEach(chat => {
+            let option = document.createElement('option');
+            option.value = chat._id;
+            option.innerHTML = chat.name;
+            select.appendChild(option);
+        });
+    }
+}
+
+async function getMyChats() {
+    let response = await fetch('/api/v1/chat/get-my', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        }
+    });
+    return await response.json();
+}
+
+async function createChat(chatName) {
+    let token = localStorage.getItem('token');
+    return fetch('/api/v1/chat/create', {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({"name": chatName})
+    }).then(response => {
+        console.log(response);
+        if (response.ok) {
+            return response.json();
+        } else {
+            return false;
+        }
+    }).then(data => {
+        if (data) {
+            return data;
+        }
+        return false;
+    });
+}
 
 async function setUserInfo() {
     let user = await getCurrentUser();

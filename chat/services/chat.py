@@ -35,20 +35,16 @@ class RedisService:
         user_key = self._make_user_key(username)
         room_key = self._make_room_key(room_id)
         return await self._redis.sismember(room_key, user_key)
-    
-    
+
     async def send_message_to_stream(self, room_id: str, fields):
-        await self._redis.xadd(name=f"room:{room_id}:stream", 
-                               fields=fields,
-                               maxlen=1000)
-    
+        await self._redis.xadd(
+            name=f"room:{room_id}:stream", fields=fields, maxlen=1000
+        )
+
     async def read_data_stream(self, room_id: str, last_id: str = b"$"):
         stream = f"room:{room_id}:stream"
-        events = await self._redis.xread(
-            streams={stream: last_id},
-            block=0)
+        events = await self._redis.xread(streams={stream: last_id}, block=0)
         return events
-
 
 
 class ChatService:
@@ -67,32 +63,48 @@ class ChatService:
 
     async def create_chat(self, user: User, chat_name: str) -> Room:
         room = await self._rooms.insert_one(Room(name=chat_name, members=[user.id]))
-        await self.redis_service.add_user_to_room(user.id, user.username, room.id)
         return room
-    
+
     async def get_chat(self, room_id: str) -> Room:
         try:
             chat = await self._rooms.get(room_id)
         except ValidationError:
             return None
         return chat
-    
+
+    async def get_user(self, user_id: str) -> User:
+        try:
+            user = await self._users.get(user_id)
+        except ValidationError:
+            return None
+        return user
+
+    async def add_user_to_chat(self, user_id, room_id: str) -> Room:
+        room = await self._rooms.get(room_id)
+        room.members.append(user_id)
+        room.save()
+        return room
+
+    async def get_user_chats(self, user_id: str) -> list[Room]:
+        rooms = await self._rooms.find(Room.members == user_id).to_list()
+        return rooms
+
     async def ws_receive(self, websocket: WebSocket, username, room_id):
         await self.redis_service.add_user_to_room(username, room_id)
         try:
             while True:
                 message = await websocket.receive_json()
-                
+
                 fields = {
-                    'username': username,
-                    'message': message,
-                    'room': room_id,
+                    "username": username,
+                    "message": message,
+                    "room": room_id,
                 }
                 await self.redis_service.send_message_to_stream(room_id, fields)
         except WebSocketDisconnect:
             await self.redis_service.remove_user_from_room(username, room_id)
             await websocket.close()
-    
+
     async def ws_send(self, websocket: WebSocket, room_id):
         last_id = b"$"
         while True:
@@ -102,4 +114,3 @@ class ChatService:
                 fields = event[1][0][1]
             await websocket.send_json(fields)
             await asyncio.sleep(1)
-        

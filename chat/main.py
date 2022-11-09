@@ -1,8 +1,9 @@
 import logging
 import uvicorn
-from fastapi import FastAPI
-from fastapi.responses import ORJSONResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import ORJSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from core.settings import get_settings
 from core.logger import LOGGING
@@ -43,7 +44,14 @@ def create_app(settings) -> FastAPI:
 
 
 settings = get_settings()
+templates = Jinja2Templates(directory="client/templates")
 app = create_app(settings)
+
+
+@app.get("/", response_class=HTMLResponse)
+async def get(request: Request):
+    return templates.TemplateResponse("chat.html", {"request": request})
+
 
 if __name__ == "__main__":
     uvicorn.run(
