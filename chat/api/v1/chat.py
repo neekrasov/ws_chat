@@ -135,6 +135,6 @@ async def ws(
 
     await websocket.accept()
     await asyncio.gather(
-        chat_service.ws_receive(websocket, username, room_id),
+        chat_service.ws_receive(websocket, username, room_id, user_id),
         chat_service.ws_send(websocket, room_id),
     )

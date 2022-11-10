@@ -1,9 +1,8 @@
 from beanie import Document, PydanticObjectId
-from .users import User
 
 
 class Message(Document):
-    author: User
+    author: PydanticObjectId
     text: str
 
     class Settings:

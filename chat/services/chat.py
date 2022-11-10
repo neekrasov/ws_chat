@@ -71,6 +71,13 @@ class ChatService:
             Room(admin_id=user.id, name=chat_name, members=[user.id])
         )
         return room
+    
+    async def save_message(self, author: str, text: str, room_id: str) -> Message:
+        message = await self._messages.insert_one(Message(author=author, text=text))
+        room = await self._rooms.get(room_id)
+        room.messages.append(message.id)
+        await room.save()
+        return message
 
     async def get_chat(self, room_id: str) -> Room:
         try:
@@ -94,12 +101,13 @@ class ChatService:
         return rooms
     
     async def get_chat_history(self, room_id: str, offset: int = 0, limit: int = 10):
-        messages = await self._messages.find(
-            Message.room == room_id
-        ).skip(Message.count() - offset).limit(limit).to_list()
+        room = await self._rooms.get(room_id)
+        messages = await self._messages\
+                        .find_many({"_id": {"$in":room.messages}})\
+                        .skip(offset).limit(limit).to_list()
         return messages
 
-    async def ws_receive(self, websocket: WebSocket, username, room_id):
+    async def ws_receive(self, websocket: WebSocket, username, room_id, user_id):
         await self.redis_service.add_user_to_room(username, room_id)
         await self.redis_service.announce_user(room_id, username)
         try:
@@ -113,6 +121,7 @@ class ChatService:
                     "room": room_id,
                 }
                 await self.redis_service.send_message_to_stream(room_id, fields)
+                await self.save_message(author=user_id, text=message, room_id=room_id)
         except WebSocketDisconnect:
             await self.redis_service.remove_user_from_room(username, room_id)
             await websocket.close()
