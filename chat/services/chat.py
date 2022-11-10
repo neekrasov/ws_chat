@@ -92,6 +92,12 @@ class ChatService:
     async def get_user_chats(self, user_id: str) -> list[Room]:
         rooms = await self._rooms.find(Room.members == user_id).to_list()
         return rooms
+    
+    async def get_chat_history(self, room_id: str, offset: int = 0, limit: int = 10):
+        messages = await self._messages.find(
+            Message.room == room_id
+        ).skip(Message.count() - offset).limit(limit).to_list()
+        return messages
 
     async def ws_receive(self, websocket: WebSocket, username, room_id):
         await self.redis_service.add_user_to_room(username, room_id)

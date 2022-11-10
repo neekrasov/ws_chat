@@ -7,7 +7,7 @@ from fastapi.exceptions import HTTPException
 from api.dependencies.chat import get_chat_service_stub, ChatService
 from api.dependencies.auth import get_current_user_stub
 from core.settings import get_settings
-from db.models import User, Room
+from db.models import User, Room, Message
 from schemas.chat import ChatCreate, UserInChatCreate
 import asyncio
 import json
@@ -92,6 +92,28 @@ async def get_my_chats(
 ):
     rooms = await chat_service.get_user_chats(user.id)
     return rooms
+
+@router.get("/history/{room_id}", response_model=list[Message])
+async def get_chat_history(
+    room_id: str,
+    limit: int = 10,
+    offset: int = 0,
+    chat_service: ChatService = Depends(get_chat_service_stub),
+    user: User = Depends(get_current_user_stub),
+):
+    
+    # offset - parameter works from the end, indentation allows you to get older messages
+    
+    room = await chat_service.get_chat(room_id)
+
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    if user.id not in room.members:
+        raise HTTPException(status_code=403, detail="User is not a member of this room")
+
+    messages = await chat_service.get_chat_history(room_id, offset, limit)
+    return messages
 
 
 @router.websocket("/ws")

@@ -412,6 +412,7 @@ function setWsConnection(data_token) {
 
   ws.onopen = () => {
     console.log("Connection established");
+    document.querySelector(".chat_messages").innerHTML = "";
   };
 
   ws.onmessage = (event) => {
