@@ -45,6 +45,9 @@ class RedisService:
         stream = f"room:{room_id}:stream"
         events = await self._redis.xread(streams={stream: last_id}, block=0)
         return events
+    
+    async def announce_user(self, room_id: str, username: str):
+        await self.send_message_to_stream(room_id, {"type": "announce", "username": username})
 
 
 class ChatService:
@@ -92,11 +95,13 @@ class ChatService:
 
     async def ws_receive(self, websocket: WebSocket, username, room_id):
         await self.redis_service.add_user_to_room(username, room_id)
+        await self.redis_service.announce_user(room_id, username)
         try:
             while True:
                 message = await websocket.receive_json()
 
                 fields = {
+                    "type": "message",
                     "username": username,
                     "message": message,
                     "room": room_id,

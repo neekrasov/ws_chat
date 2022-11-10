@@ -416,7 +416,13 @@ function setWsConnection(data_token) {
 
   ws.onmessage = (event) => {
     data = JSON.parse(event.data);
-    createMessage(data["username"], data["message"]);
+    switch (data.type) {
+      case "message":
+        createMessage(data["username"], data["message"]);
+        break;
+      case "announce":
+        alert("user " + data["username"] + " connected");
+    }
   };
 
   ws.onclose = (event) => {
