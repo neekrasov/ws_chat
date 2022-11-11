@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  web:
+    container_name: web
+    build: ./
+    env_file: ./dev.env
+    ports:
+      - 8000:8000
+    depends_on:
+      - redis
+      - mongodb
+
+  redis:
+    container_name: redis
+    image: redis:7
+    expose:
+      - 6379
+    depends_on:
+      - mongodb
+
+  mongodb:
+    container_name: mongodb
+    image: mongo
+    restart: always
+    env_file: ./dev.env
+    volumes:
+      - ws_chat-data:/usr/share/ws_chat/data
+    ports:
+      - 27017:27017
+  
+volumes:
+    ws_chat-data:

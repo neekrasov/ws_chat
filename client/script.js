@@ -133,6 +133,11 @@ document.addEventListener("DOMContentLoaded", () => {
           ".chat .chat__select-form .chat__select-el"
         );
         select.appendChild(newOption);
+        chatName.value = "";
+        chatCreateForm.querySelector("button").disabled = true;
+        setTimeout(() => {
+          chatCreateForm.querySelector("button").disabled = false;
+        }, 5000);
       } else {
         alert("Chat creation failed");
       }
@@ -421,8 +426,12 @@ function setWsConnection(data_token) {
       case "message":
         createMessage(data["username"], data["message"]);
         break;
-      case "announce":
+      case "join":
         alert("user " + data["username"] + " connected");
+        break;
+      case "leave":
+        alert("user " + data["username"] + " disconnected");
+        break;
     }
   };
 

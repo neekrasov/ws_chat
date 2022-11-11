@@ -46,8 +46,8 @@ class RedisService:
         events = await self._redis.xread(streams={stream: last_id}, block=0)
         return events
     
-    async def announce_user(self, room_id: str, username: str):
-        await self.send_message_to_stream(room_id, {"type": "announce", "username": username})
+    async def announce(self, room_id: str, username: str, type: str):
+        await self.send_message_to_stream(room_id, {"type": type, "username": username})
 
 
 class ChatService:
@@ -108,8 +108,9 @@ class ChatService:
         return messages
 
     async def ws_receive(self, websocket: WebSocket, username, room_id, user_id):
-        await self.redis_service.add_user_to_room(username, room_id)
-        await self.redis_service.announce_user(room_id, username)
+        if await self.redis_service.user_room_exists(username, room_id) is False:
+            await self.redis_service.add_user_to_room(username, room_id)
+            await self.redis_service.announce(room_id, username, "join")
         try:
             while True:
                 message = await websocket.receive_json()
@@ -124,6 +125,7 @@ class ChatService:
                 await self.save_message(author=user_id, text=message, room_id=room_id)
         except WebSocketDisconnect:
             await self.redis_service.remove_user_from_room(username, room_id)
+            await self.redis_service.announce(room_id, username, "leave")
             await websocket.close()
 
     async def ws_send(self, websocket: WebSocket, room_id):
